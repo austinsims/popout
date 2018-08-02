@@ -25,7 +25,7 @@ export const store = new Vuex.Store({
   },
 });
 
-export const Counter = Vue.component('counter', {
+export const Counter = Vue.component('x-counter', {
   computed: {
     count() { return store.state.count; },
   },
@@ -42,7 +42,7 @@ export const Counter = Vue.component('counter', {
   },
 });
 
-export const Indicator = Vue.component('indicator', {
+export const Indicator = Vue.component('x-indicator', {
   computed: {
     connected() { return store.state.connected; },
   },
