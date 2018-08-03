@@ -35,7 +35,12 @@ function ack(w) {
   return promise;
 }
 
-const vue = new Vue({ el: '#root' });
+const vue = new Vue({
+  el: '#root',
+  computed: {
+    heading: () => window.opener ? 'Popout' : 'Inline',
+  },
+});
 
 listenForData();
 

@@ -46,10 +46,20 @@ const vue = new Vue({
     handlePopoutClick() {
       store.commit('disconnect');
       if (this.popped) {
-        // TODO: Pop back in
-      } else {
-        win = window.open('./popout.html');
         store.commit('disconnect');
+        win.close();
+        child = null;
+        win = null;
+        this.popped = false;
+        // Allow Vue to re-render the iframe, then pop back into it.
+        setTimeout(() => {
+          win = document.querySelector('iframe').contentWindow;
+          child = syn(win);
+        }, 0);
+      } else {
+        store.commit('disconnect');
+        child = null;
+        win = window.open('./popout.html');
         child = syn(win);
         this.popped = true;
       }

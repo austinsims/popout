@@ -11,7 +11,7 @@
       <x-counter></x-counter>
       <x-indicator></x-indicator>
       <iframe v-if="!popped" src="./popout.html"></iframe>
-      <button v-on:click="handlePopoutClick">Pop Out</button>
+      <button v-on:click="handlePopoutClick">Pop {{ popped ? 'In' : 'Out' }} </button>
     </div>
 
     <script src="./vue.js"></script>
