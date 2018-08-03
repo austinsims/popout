@@ -10,7 +10,8 @@
       <h1>Main</h1>
       <x-counter></x-counter>
       <x-indicator></x-indicator>
-      <iframe src="./popout.html"></iframe>
+      <iframe v-if="!popped" src="./popout.html"></iframe>
+      <button v-on:click="handlePopoutClick">Pop Out</button>
     </div>
 
     <script src="./vue.js"></script>

@@ -8,30 +8,35 @@ import {
   synchronize,
 } from './common.js';
 
+/**
+ * @param {!Window} w
+ * @return {!Promise<!function(!Message)>}
+ */
+function ack(w) {
+  const promise = new Promise((resolve, reject) => {
+    function post(message) {
+      w.postMessage(message, '*');
+    }
+    window.addEventListener('message', evt => {
+      if (evt.data.type !== MessageType.SYN) {
+        return;
+      }
+      post(new Message({type: MessageType.SYNACK}));
+    });
+    window.addEventListener('message', evt => {
+      if (evt.data.type !== MessageType.ACK) {
+        return;
+      }
+      store.commit('connect')
+      synchronize(post);
+      resolve(post);
+    });
+  });
+  return promise;
+}
+
 const vue = new Vue({ el: '#root' });
 
 listenForData();
 
-// Respond to three way handshake from parent.
-const parent = new Promise((resolve, reject) => {
-  function post(message) {
-    window.parent.postMessage(message, '*');
-  }
-
-  window.addEventListener('message', evt => {
-    if (evt.data.type !== MessageType.SYN) {
-      return;
-    }
-    post(new Message({type: MessageType.SYNACK}));
-  });
-
-  window.addEventListener('message', evt => {
-    if (evt.data.type !== MessageType.ACK) {
-      return;
-    }
-    resolve(post);
-  });
-});
-
-parent.then(() => store.commit('connect'));
-parent.then(post => synchronize(post));
+const parent = ack(window.opener || window.parent);

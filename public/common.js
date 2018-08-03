@@ -14,7 +14,7 @@ export class Message {
 
 export const store = new Vuex.Store({
   state: {
-    count: 0,
+    count: null,
     connected: false,
   },
   mutations: {
@@ -22,6 +22,7 @@ export const store = new Vuex.Store({
     dec(state) { state.count--; },
     set(state, count) { state.count = count; },
     connect(state) { state.connected = true; },
+    disconnect(state) { state.connected = false; },
   },
 });
 
@@ -57,8 +58,11 @@ export const Indicator = Vue.component('x-indicator', {
  * @param {!function(!Message)} post
  */
 export function synchronize(post) {
-  let last = store.state.count;
-  store.subscribe((_, state) => {
+  let last;
+  function onUpdate(state) {
+    if (typeof state.count !== 'number') {
+      return;
+    }
     if (state.count === last) {
       return;
     }
@@ -67,7 +71,9 @@ export function synchronize(post) {
       type: MessageType.DATA,
       payload: state.count,
     }));
-  });
+  }
+  onUpdate(store.state);
+  store.subscribe((_, state) => onUpdate(state));
 }
 
 /** Listen to updates from the other frame, updating store. */

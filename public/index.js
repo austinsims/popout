@@ -8,37 +8,60 @@ import {
   synchronize,
 } from './common.js';
 
-const vue = new Vue({ el: '#root' });
+/**
+ * @param {!Window} w
+ * @return {!Promise<!function(!Message)>}
+ */
+function syn(w) {
+  const promise = new Promise((resolve, reject) => {
+    function post(message) { 
+      w.postMessage(message, '*');
+    }
+    const interval = setInterval(() => {
+      post(new Message({type: MessageType.SYN}));
+    }, 100);
+    window.addEventListener('message', evt => {
+      if (evt.data.type !== MessageType.SYNACK) {
+        return;
+      }
+      clearInterval(interval);
+      post(new Message({type: MessageType.ACK}));
+      store.commit('connect');
+      synchronize(post);
+      resolve(post);
+    });
+  });
+  return promise;
+}
+
+let child = null;
+let win = null;
+
+const vue = new Vue({
+  el: '#root',
+  data: {
+    popped: false,
+  },
+  methods: {
+    handlePopoutClick() {
+      store.commit('disconnect');
+      if (this.popped) {
+        // TODO: Pop back in
+      } else {
+        win = window.open('./popout.html');
+        store.commit('disconnect');
+        child = syn(win);
+        this.popped = true;
+      }
+    },
+  },
+});
 
 listenForData();
 
-// Initiate three way handshake to child.
-const child = new Promise((resolve, reject) => {
-  const iframe = document.querySelector('iframe');
-
-  function post(message) {
-    iframe.contentWindow.postMessage(message, '*');
-  }
-
-  const interval = setInterval(() => {
-    post(new Message({type: MessageType.SYN}));
-  }, 100);
-
-  window.addEventListener('message', evt => {
-    if (evt.data.type !== MessageType.SYNACK) {
-      return;
-    }
-    clearInterval(interval);
-    post(new Message({type: MessageType.ACK}));
-    resolve(post);
-  });
-});
-
-child.then(() => store.commit('connect'));
+child = syn(document.querySelector('iframe').contentWindow);
 
 child.then(post => {
-  synchronize(post);
-
   // Load initial data from server.
   fetch('/data')
     .then(response => response.json())
@@ -46,4 +69,3 @@ child.then(post => {
       store.commit('set', json.count);
     });
 });
-
